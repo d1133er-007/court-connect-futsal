@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Booking } from "@/types";
+import { Booking, Court, TimeSlot } from "@/types";
 import { format, parseISO } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,8 +19,14 @@ interface BookingsListProps {
   userId: string;
 }
 
+// Define extended booking type with related data
+interface ExtendedBooking extends Booking {
+  court?: Court;
+  timeSlot?: TimeSlot;
+}
+
 export const BookingsList = ({ userId }: BookingsListProps) => {
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useState<ExtendedBooking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -29,7 +35,7 @@ export const BookingsList = ({ userId }: BookingsListProps) => {
       setIsLoading(true);
       try {
         const userBookings = await getUserBookings(userId);
-        setBookings(userBookings);
+        setBookings(userBookings as ExtendedBooking[]);
       } catch (error) {
         console.error("Error fetching bookings:", error);
         toast({
@@ -126,7 +132,7 @@ export const BookingsList = ({ userId }: BookingsListProps) => {
         {bookings.map((booking) => (
           <Card key={booking.id}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xl">{booking.court?.name}</CardTitle>
+              <CardTitle className="text-xl">{booking.court?.name || 'Unknown Court'}</CardTitle>
               <div className="flex items-center space-x-1">
                 {getStatusIcon(booking.status)}
                 <span
@@ -153,13 +159,13 @@ export const BookingsList = ({ userId }: BookingsListProps) => {
                   <div className="flex items-center text-gray-600">
                     <Clock className="w-5 h-5 mr-2" />
                     <span>
-                      {format(parseISO(booking.timeSlot?.startTime), "h:mm a")} -{" "}
-                      {format(parseISO(booking.timeSlot?.endTime), "h:mm a")}
+                      {booking.timeSlot ? format(parseISO(booking.timeSlot.startTime), "h:mm a") : 'Unknown time'} -{" "}
+                      {booking.timeSlot ? format(parseISO(booking.timeSlot.endTime), "h:mm a") : ''}
                     </span>
                   </div>
                   <div className="flex items-center text-gray-600">
                     <MapPin className="w-5 h-5 mr-2" />
-                    <span>{booking.court?.location}</span>
+                    <span>{booking.court?.location || 'Unknown location'}</span>
                   </div>
                 </div>
                 

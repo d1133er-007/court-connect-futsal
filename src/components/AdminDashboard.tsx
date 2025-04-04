@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Booking } from "@/types";
+import { Booking, Court, TimeSlot, User } from "@/types";
 import { format, parseISO } from "date-fns";
 import {
   Card,
@@ -14,8 +14,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { getAllBookings, updateBookingStatus } from "@/lib/supabase";
 
+// Define extended booking type with related data
+interface ExtendedBooking extends Booking {
+  court?: Court;
+  timeSlot?: TimeSlot;
+  user?: User;
+}
+
 export const AdminDashboard = () => {
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useState<ExtendedBooking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -24,7 +31,7 @@ export const AdminDashboard = () => {
       setIsLoading(true);
       try {
         const allBookings = await getAllBookings();
-        setBookings(allBookings);
+        setBookings(allBookings as ExtendedBooking[]);
       } catch (error) {
         console.error("Error fetching bookings:", error);
         toast({
@@ -179,7 +186,7 @@ export const AdminDashboard = () => {
 };
 
 interface BookingItemProps {
-  booking: Booking;
+  booking: ExtendedBooking;
   onConfirm?: () => void;
   onCancel?: () => void;
 }
@@ -189,15 +196,15 @@ const BookingItem = ({ booking, onConfirm, onCancel }: BookingItemProps) => {
     <div className="border rounded-lg p-4">
       <div className="flex flex-col md:flex-row justify-between">
         <div>
-          <h4 className="font-medium">{booking.court?.name}</h4>
+          <h4 className="font-medium">{booking.court?.name || 'Unknown Court'}</h4>
           <div className="text-sm text-gray-500 mb-2">
             {format(parseISO(booking.bookingDate), "MMMM d, yyyy")} •{" "}
-            {format(parseISO(booking.timeSlot?.startTime), "h:mm a")} -{" "}
-            {format(parseISO(booking.timeSlot?.endTime), "h:mm a")}
+            {booking.timeSlot ? format(parseISO(booking.timeSlot.startTime), "h:mm a") : 'Unknown time'} -{" "}
+            {booking.timeSlot ? format(parseISO(booking.timeSlot.endTime), "h:mm a") : ''}
           </div>
           <div className="text-sm">
             <span className="text-gray-600">Customer:</span>{" "}
-            <span>{booking.user?.name}</span> ({booking.user?.email})
+            <span>{booking.user?.name || 'Unknown user'}</span> ({booking.user?.email || 'No email'})
           </div>
         </div>
         
