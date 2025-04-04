@@ -1,12 +1,7 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { Booking, Court, Payment, TimeSlot, User } from '@/types';
-
-// Note: In a real implementation, these would come from environment variables
-const supabaseUrl = 'https://your-supabase-url.supabase.co';
-const supabaseAnonKey = 'your-supabase-anon-key';
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from '@/integrations/supabase/client';
+import { Booking, Court, ExtendedBooking, Payment, TimeSlot, User, mapDbBooking, mapDbCourt, mapDbTimeSlot, mapDbUser } from '@/types';
 
 // Auth functions
 export const signUp = async (email: string, password: string, name: string) => {
@@ -16,7 +11,6 @@ export const signUp = async (email: string, password: string, name: string) => {
     options: {
       data: {
         name,
-        role: 'player',
       },
     },
   });
@@ -37,26 +31,19 @@ export const signOut = async () => {
 };
 
 export const getCurrentUser = async (): Promise<User | null> => {
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) return null;
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData.user) return null;
   
   // Fetch additional user data from the profiles table
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('*')
-    .eq('id', data.user.id)
+    .eq('id', authData.user.id)
     .single();
     
-  if (!profile) return null;
+  if (profileError || !profile) return null;
   
-  return {
-    id: data.user.id,
-    email: data.user.email!,
-    name: profile.name,
-    role: profile.role,
-    phone: profile.phone,
-    avatarUrl: profile.avatar_url,
-  };
+  return mapDbUser(profile);
 };
 
 // Court functions
@@ -66,7 +53,7 @@ export const getCourts = async (): Promise<Court[]> => {
     .select('*');
     
   if (error) throw error;
-  return data || [];
+  return data ? data.map(mapDbCourt) : [];
 };
 
 export const getCourtById = async (id: string): Promise<Court | null> => {
@@ -77,20 +64,23 @@ export const getCourtById = async (id: string): Promise<Court | null> => {
     .single();
     
   if (error) return null;
-  return data;
+  return data ? mapDbCourt(data) : null;
 };
 
 // Time slot functions
 export const getTimeSlotsByCourt = async (courtId: string, date: string): Promise<TimeSlot[]> => {
+  const startOfDay = `${date}T00:00:00`;
+  const endOfDay = `${date}T23:59:59`;
+  
   const { data, error } = await supabase
     .from('time_slots')
     .select('*')
     .eq('court_id', courtId)
-    .gte('start_time', `${date}T00:00:00`)
-    .lte('start_time', `${date}T23:59:59`);
+    .gte('start_time', startOfDay)
+    .lte('start_time', endOfDay);
     
   if (error) throw error;
-  return data || [];
+  return data ? data.map(mapDbTimeSlot) : [];
 };
 
 // Booking functions
@@ -108,28 +98,40 @@ export const createBooking = async (
       time_slot_id: timeSlotId,
       booking_date: bookingDate,
       status: 'pending',
-      created_at: new Date().toISOString(),
     })
     .select()
     .single();
     
-  if (error) return null;
-  return data;
+  if (error) {
+    console.error('Error creating booking:', error);
+    return null;
+  }
+  return data ? mapDbBooking(data) : null;
 };
 
-export const getUserBookings = async (userId: string): Promise<Booking[]> => {
+export const getUserBookings = async (userId: string): Promise<ExtendedBooking[]> => {
   const { data, error } = await supabase
     .from('bookings')
     .select(`
       *,
-      courts:court_id(name, location, price_per_hour),
-      time_slots:time_slot_id(start_time, end_time)
+      courts:court_id(*),
+      time_slots:time_slot_id(*)
     `)
     .eq('user_id', userId)
     .order('booking_date', { ascending: false });
     
   if (error) throw error;
-  return data || [];
+  
+  if (!data) return [];
+  
+  return data.map(booking => {
+    const mappedBooking = mapDbBooking(booking);
+    return {
+      ...mappedBooking,
+      court: booking.courts ? mapDbCourt(booking.courts) : undefined,
+      timeSlot: booking.time_slots ? mapDbTimeSlot(booking.time_slots) : undefined
+    };
+  });
 };
 
 // Payment functions
@@ -147,30 +149,39 @@ export const createPayment = async (
       currency: 'USD',
       status: 'pending',
       payment_method: 'card',
-      created_at: new Date().toISOString(),
     })
     .select()
     .single();
     
   if (error) return null;
-  return data;
+  return data as unknown as Payment;
 };
 
 // Admin functions
-export const getAllBookings = async (): Promise<Booking[]> => {
+export const getAllBookings = async (): Promise<ExtendedBooking[]> => {
   const { data, error } = await supabase
     .from('bookings')
     .select(`
       *,
-      users:user_id(email, name),
-      courts:court_id(name, location),
-      time_slots:time_slot_id(start_time, end_time),
-      payments(status, amount)
+      profiles:user_id(*),
+      courts:court_id(*),
+      time_slots:time_slot_id(*)
     `)
     .order('booking_date', { ascending: false });
     
   if (error) throw error;
-  return data || [];
+  
+  if (!data) return [];
+  
+  return data.map(booking => {
+    const mappedBooking = mapDbBooking(booking);
+    return {
+      ...mappedBooking,
+      court: booking.courts ? mapDbCourt(booking.courts) : undefined,
+      timeSlot: booking.time_slots ? mapDbTimeSlot(booking.time_slots) : undefined,
+      user: booking.profiles ? mapDbUser(booking.profiles) : undefined
+    };
+  });
 };
 
 export const updateBookingStatus = async (

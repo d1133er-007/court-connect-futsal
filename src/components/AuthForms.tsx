@@ -6,33 +6,42 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
+import { Loader2 } from "lucide-react";
 
 export const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
   const { signIn } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
     
     try {
-      await signIn(email, password);
+      const result = await signIn(email, password);
+      if (result.error) {
+        throw result.error;
+      }
       navigate("/");
-    } catch (error) {
-      console.error("Login error:", error);
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError(err.message || "Failed to sign in. Please check your credentials.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Log In</CardTitle>
-        <CardDescription>Enter your credentials to access your account</CardDescription>
+    <Card className="w-full max-w-md mx-auto shadow-lg border-0">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
+        <CardDescription className="text-center">
+          Enter your credentials to access your account
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -45,12 +54,13 @@ export const LoginForm = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className="h-11"
             />
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
-              <Link to="/forgot-password" className="text-sm text-court-green hover:underline">
+              <Link to="/forgot-password" className="text-sm text-primary hover:underline">
                 Forgot password?
               </Link>
             </div>
@@ -61,17 +71,30 @@ export const LoginForm = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              className="h-11"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Loading..." : "Log In"}
+          {error && (
+            <div className="bg-destructive/15 text-destructive text-sm p-3 rounded">
+              {error}
+            </div>
+          )}
+          <Button type="submit" className="w-full h-11" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing in...
+              </>
+            ) : (
+              "Sign In"
+            )}
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="flex justify-center">
-        <p className="text-sm text-gray-500">
+      <CardFooter className="flex justify-center pb-6">
+        <p className="text-sm text-muted-foreground">
           Don't have an account?{" "}
-          <Link to="/signup" className="text-court-green hover:underline">
+          <Link to="/signup" className="text-primary font-semibold hover:underline">
             Sign up
           </Link>
         </p>
@@ -86,6 +109,7 @@ export const SignupForm = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const navigate = useNavigate();
   const { signUp } = useAuth();
@@ -111,23 +135,30 @@ export const SignupForm = () => {
     if (!validatePassword()) return;
     
     setIsLoading(true);
+    setError("");
     
     try {
-      await signUp(email, password, name);
+      const result = await signUp(email, password, name);
+      if (result.error) {
+        throw result.error;
+      }
       // After signup, redirect to login
       navigate("/login");
-    } catch (error) {
-      console.error("Signup error:", error);
+    } catch (err: any) {
+      console.error("Signup error:", err);
+      setError(err.message || "Failed to create account");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Create an Account</CardTitle>
-        <CardDescription>Sign up to start booking futsal courts</CardDescription>
+    <Card className="w-full max-w-md mx-auto shadow-lg border-0">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl font-bold text-center">Create an Account</CardTitle>
+        <CardDescription className="text-center">
+          Enter your details to create your account
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -140,6 +171,7 @@ export const SignupForm = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              className="h-11"
             />
           </div>
           <div className="space-y-2">
@@ -151,6 +183,7 @@ export const SignupForm = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className="h-11"
             />
           </div>
           <div className="space-y-2">
@@ -162,6 +195,7 @@ export const SignupForm = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              className="h-11"
             />
           </div>
           <div className="space-y-2">
@@ -173,19 +207,32 @@ export const SignupForm = () => {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
+              className="h-11"
             />
-            {passwordError && <p className="text-red-500 text-sm mt-1">{passwordError}</p>}
+            {passwordError && <p className="text-destructive text-sm mt-1">{passwordError}</p>}
           </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Creating Account..." : "Sign Up"}
+          {error && (
+            <div className="bg-destructive/15 text-destructive text-sm p-3 rounded">
+              {error}
+            </div>
+          )}
+          <Button type="submit" className="w-full h-11" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating Account...
+              </>
+            ) : (
+              "Create Account"
+            )}
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="flex justify-center">
-        <p className="text-sm text-gray-500">
+      <CardFooter className="flex justify-center pb-6">
+        <p className="text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link to="/login" className="text-court-green hover:underline">
-            Log in
+          <Link to="/login" className="text-primary font-semibold hover:underline">
+            Sign in
           </Link>
         </p>
       </CardFooter>

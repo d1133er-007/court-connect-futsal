@@ -7,13 +7,34 @@ import { getCourts } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Search, Loader2, Filter } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import { Slider } from "@/components/ui/slider";
 
 const Courts = () => {
   const [courts, setCourts] = useState<Court[]>([]);
   const [filteredCourts, setFilteredCourts] = useState<Court[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [priceRange, setPriceRange] = useState([0, 100]);
+  const [sortBy, setSortBy] = useState("recommended");
+  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -37,129 +58,215 @@ const Courts = () => {
     fetchCourts();
   }, [toast]);
 
+  // All possible features from courts
+  const allFeatures = Array.from(
+    new Set(courts.flatMap((court) => court.features))
+  ).sort();
+
+  // When filters change, apply all filters
   useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredCourts(courts);
-      return;
+    if (courts.length === 0) return;
+
+    let filtered = [...courts];
+
+    // Apply search filter
+    if (searchQuery.trim() !== "") {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (court) =>
+          court.name.toLowerCase().includes(query) ||
+          court.location.toLowerCase().includes(query) ||
+          court.description.toLowerCase().includes(query)
+      );
     }
 
-    const query = searchQuery.toLowerCase();
-    const filtered = courts.filter(
+    // Apply price range filter
+    filtered = filtered.filter(
       (court) =>
-        court.name.toLowerCase().includes(query) ||
-        court.location.toLowerCase().includes(query)
+        court.pricePerHour >= priceRange[0] && court.pricePerHour <= priceRange[1]
     );
-    setFilteredCourts(filtered);
-  }, [searchQuery, courts]);
 
-  // Sample courts for initial display before loading
-  const sampleCourts: Court[] = [
-    {
-      id: "1",
-      name: "Downtown Futsal Arena",
-      location: "123 Main St, Downtown",
-      description: "Professional futsal court with high-quality turf and excellent facilities.",
-      pricePerHour: 80,
-      imageUrl: "https://images.unsplash.com/photo-1552667466-07770ae110d0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-      features: ["Indoor", "Air Conditioned", "Equipment Rental", "Changing Rooms"],
-      rating: 4.8,
-    },
-    {
-      id: "2",
-      name: "Riverside Futsal Park",
-      location: "45 River Road, East Side",
-      description: "Beautiful outdoor futsal courts with riverside views and night lighting.",
-      pricePerHour: 60,
-      imageUrl: "https://images.unsplash.com/photo-1600679472829-3044539ce8ed?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-      features: ["Outdoor", "Night Lighting", "Parking", "Spectator Area"],
-      rating: 4.6,
-    },
-    {
-      id: "3",
-      name: "Sports Center Futsal",
-      location: "789 Stadium Blvd, West District",
-      description: "Part of a large sports complex with multiple futsal courts available.",
-      pricePerHour: 70,
-      imageUrl: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1169&q=80",
-      features: ["Indoor/Outdoor", "Cafeteria", "Pro Shop", "Training Programs"],
-      rating: 4.5,
-    },
-    {
-      id: "4",
-      name: "University Futsal Center",
-      location: "321 College Ave, North Campus",
-      description: "Modern futsal facilities open to the public on the university campus.",
-      pricePerHour: 55,
-      imageUrl: "https://images.unsplash.com/photo-1599138900450-3d06e89ad317?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-      features: ["Indoor", "Student Discounts", "Equipment Rental", "Locker Rooms"],
-      rating: 4.3,
-    },
-    {
-      id: "5",
-      name: "Community Futsal Field",
-      location: "567 Park Lane, South Side",
-      description: "Community-run futsal courts with affordable rates for locals.",
-      pricePerHour: 45,
-      imageUrl: "https://images.unsplash.com/photo-1564447414600-375ceb4b527a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-      features: ["Outdoor", "Community Events", "Beginner Friendly", "Youth Programs"],
-      rating: 4.1,
-    },
-    {
-      id: "6",
-      name: "Elite Futsal Academy",
-      location: "890 Professional Dr, Business District",
-      description: "High-end futsal facility with professional-grade courts and amenities.",
-      pricePerHour: 90,
-      imageUrl: "https://images.unsplash.com/photo-1584714268709-c3dd9c92b378?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1169&q=80",
-      features: ["Indoor", "Professional Training", "Video Analysis", "VIP Lounge"],
-      rating: 4.9,
-    },
-  ];
+    // Apply feature filters
+    if (selectedFeatures.length > 0) {
+      filtered = filtered.filter((court) =>
+        selectedFeatures.every((feature) => court.features.includes(feature))
+      );
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+      case "price-low":
+        filtered.sort((a, b) => a.pricePerHour - b.pricePerHour);
+        break;
+      case "price-high":
+        filtered.sort((a, b) => b.pricePerHour - a.pricePerHour);
+        break;
+      case "rating":
+        filtered.sort((a, b) => b.rating - a.rating);
+        break;
+      case "recommended":
+      default:
+        // Sort by a combination of rating and price
+        filtered.sort(
+          (a, b) => b.rating * 10 - a.pricePerHour - (a.rating * 10 - b.pricePerHour)
+        );
+        break;
+    }
+
+    setFilteredCourts(filtered);
+  }, [searchQuery, courts, priceRange, sortBy, selectedFeatures]);
+
+  const toggleFeature = (feature: string) => {
+    setSelectedFeatures((prev) =>
+      prev.includes(feature)
+        ? prev.filter((f) => f !== feature)
+        : [...prev, feature]
+    );
+  };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setPriceRange([0, 100]);
+    setSortBy("recommended");
+    setSelectedFeatures([]);
+  };
+
+  // Find min and max price in courts
+  const minPrice = Math.min(...courts.map((court) => court.pricePerHour));
+  const maxPrice = Math.max(...courts.map((court) => court.pricePerHour));
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Navbar />
       
-      <div className="container mx-auto px-4 py-12">
-        <h1 className="text-3xl font-bold mb-6">Futsal Courts</h1>
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">Find Your Perfect Court</h1>
         
-        <div className="relative max-w-md mb-8">
-          <Input
-            type="text"
-            placeholder="Search by name or location..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-          {searchQuery && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 text-gray-400"
-              onClick={() => setSearchQuery("")}
-            >
-              Clear
-            </Button>
-          )}
+        <div className="flex flex-col md:flex-row gap-4 mb-8">
+          <div className="relative flex-grow">
+            <Input
+              type="text"
+              placeholder="Search by name, location, or description..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-12"
+            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 text-muted-foreground"
+                onClick={() => setSearchQuery("")}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+          
+          <div className="flex gap-2">
+            <Select value={sortBy} onValueChange={(value) => setSortBy(value)}>
+              <SelectTrigger className="w-[180px] h-12">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recommended">Recommended</SelectItem>
+                <SelectItem value="rating">Top Rated</SelectItem>
+                <SelectItem value="price-low">Price: Low to High</SelectItem>
+                <SelectItem value="price-high">Price: High to Low</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Drawer>
+              <DrawerTrigger asChild>
+                <Button variant="outline" className="h-12">
+                  <Filter className="h-5 w-5 mr-2" />
+                  Filters
+                  {(priceRange[0] > minPrice || 
+                    priceRange[1] < maxPrice || 
+                    selectedFeatures.length > 0) && (
+                    <span className="ml-2 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
+                      {(priceRange[0] > minPrice || priceRange[1] < maxPrice ? 1 : 0) + 
+                       (selectedFeatures.length > 0 ? 1 : 0)}
+                    </span>
+                  )}
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent>
+                <div className="mx-auto w-full max-w-lg">
+                  <DrawerHeader>
+                    <DrawerTitle>Filter Courts</DrawerTitle>
+                    <DrawerDescription>
+                      Apply filters to find the perfect court for your needs
+                    </DrawerDescription>
+                  </DrawerHeader>
+                  <div className="p-4 space-y-6">
+                    <div className="space-y-4">
+                      <div className="font-medium">Price Range (per hour)</div>
+                      <div className="px-2">
+                        <Slider
+                          defaultValue={[0, 100]}
+                          min={0}
+                          max={100}
+                          step={5}
+                          value={priceRange}
+                          onValueChange={(value) => setPriceRange(value as [number, number])}
+                          className="my-6"
+                        />
+                        <div className="flex justify-between text-sm">
+                          <span>${priceRange[0]}</span>
+                          <span>${priceRange[1]}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="font-medium">Facilities & Features</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {allFeatures.map((feature) => (
+                          <Button
+                            key={feature}
+                            variant={selectedFeatures.includes(feature) ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => toggleFeature(feature)}
+                            className="justify-start"
+                          >
+                            {feature}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <DrawerFooter>
+                    <Button onClick={clearFilters} variant="outline">
+                      Reset Filters
+                    </Button>
+                    <DrawerClose asChild>
+                      <Button>Apply Filters</Button>
+                    </DrawerClose>
+                  </DrawerFooter>
+                </div>
+              </DrawerContent>
+            </Drawer>
+          </div>
         </div>
         
         {isLoading ? (
-          <div className="court-container">
-            {sampleCourts.map((court) => (
-              <CourtCard key={court.id} court={court} />
-            ))}
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <span className="ml-2 text-lg">Loading courts...</span>
           </div>
         ) : filteredCourts.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="text-center py-16 bg-muted/30 rounded-lg">
             <h3 className="text-xl font-semibold mb-2">No Courts Found</h3>
-            <p className="text-gray-500 mb-4">
-              We couldn't find any courts matching your search.
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              We couldn't find any courts matching your search criteria. 
+              Try adjusting your filters or search terms.
             </p>
-            <Button onClick={() => setSearchQuery("")}>Clear Search</Button>
+            <Button onClick={clearFilters}>Clear All Filters</Button>
           </div>
         ) : (
-          <div className="court-container">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCourts.map((court) => (
               <CourtCard key={court.id} court={court} />
             ))}
