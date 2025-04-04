@@ -194,3 +194,56 @@ export const updateBookingStatus = async (
     
   return !error;
 };
+
+// Add functions for managing user profile
+export const updateUserProfile = async (
+  userId: string, 
+  profileData: { name?: string; phone?: string; avatar_url?: string }
+): Promise<boolean> => {
+  const { error } = await supabase
+    .from('profiles')
+    .update(profileData)
+    .eq('id', userId);
+    
+  return !error;
+};
+
+// Add function to cancel a booking
+export const cancelBooking = async (bookingId: string): Promise<boolean> => {
+  const { error } = await supabase
+    .from('bookings')
+    .update({ status: 'canceled' })
+    .eq('id', bookingId);
+    
+  return !error;
+};
+
+// Add function to get user payments
+export const getUserPayments = async (userId: string): Promise<Payment[]> => {
+  const { data, error } = await supabase
+    .from('payments')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+    
+  if (error) throw error;
+  return data as unknown as Payment[] || [];
+};
+
+// Add function to request password reset
+export const requestPasswordReset = async (email: string): Promise<{ error: Error | null }> => {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/reset-password',
+  });
+  
+  return { error };
+};
+
+// Add function to reset password with recovery token
+export const resetPassword = async (newPassword: string): Promise<{ error: Error | null }> => {
+  const { error } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+  
+  return { error };
+};
