@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Helmet } from "react-helmet";
 
 const Profile = () => {
   const { user, loading } = useAuth();
@@ -83,6 +84,10 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Your Profile | FutsalConnect</title>
+      </Helmet>
+      
       <Navbar />
       
       <div className="container mx-auto px-4 py-12">

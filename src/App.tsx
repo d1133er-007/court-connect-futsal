@@ -16,6 +16,8 @@ import Bookings from "./pages/Bookings";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 // Import contexts
 import { AuthProvider } from "./contexts/AuthContext";
@@ -72,6 +74,8 @@ const AppRoutes = () => (
     <Route path="/courts/:id" element={<CourtDetail />} />
     <Route path="/login" element={<Login />} />
     <Route path="/signup" element={<Signup />} />
+    <Route path="/forgot-password" element={<ForgotPassword />} />
+    <Route path="/reset-password" element={<ResetPassword />} />
     <Route path="/bookings" element={<ProtectedRoute><Bookings /></ProtectedRoute>} />
     <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
     <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
