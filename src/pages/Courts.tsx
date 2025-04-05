@@ -2,9 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { ReloadIcon } from '@radix-ui/react-icons';
-import Navbar from '@/components/Navbar';
-import CourtCard from '@/components/CourtCard';
+import { Loader2 } from 'lucide-react';
+import { Navbar } from '@/components/Navbar';
+import { CourtCard } from '@/components/CourtCard';
 import { getCourts } from '@/lib/supabase';
 import { Court } from '@/types';
 
@@ -49,7 +49,7 @@ const Courts = () => {
         
         {loading ? (
           <div className="flex items-center justify-center h-64">
-            <ReloadIcon className="mr-2 h-6 w-6 animate-spin" />
+            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
             <span>Loading courts...</span>
           </div>
         ) : error ? (

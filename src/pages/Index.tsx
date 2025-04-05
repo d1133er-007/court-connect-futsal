@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ReloadIcon } from '@radix-ui/react-icons';
-import Navbar from '@/components/Navbar';
+import { Loader2 } from 'lucide-react';
+import { Navbar } from '@/components/Navbar';
 import { Court } from '@/types';
 import { getCourts } from '@/lib/supabase';
 
@@ -64,7 +64,7 @@ const Index = () => {
           
           {loading ? (
             <div className="flex justify-center items-center py-12">
-              <ReloadIcon className="h-8 w-8 animate-spin text-blue-600 mr-2" />
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600 mr-2" />
               <span className="text-lg">Loading courts...</span>
             </div>
           ) : error ? (
