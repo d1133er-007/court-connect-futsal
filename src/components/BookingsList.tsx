@@ -1,7 +1,6 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ExtendedBooking } from "@/types";
-import { format, parseISO } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +13,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getUserBookings, updateBookingStatus } from "@/lib/supabase";
+import { cancelBooking } from "@/lib/supabase";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,54 +26,31 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { format, parseISO } from "date-fns";
 
 interface BookingsListProps {
-  userId: string;
+  bookings: ExtendedBooking[];
+  emptyMessage: string;
+  onStatusChange?: () => void;
 }
 
-export const BookingsList = ({ userId }: BookingsListProps) => {
-  const [bookings, setBookings] = useState<ExtendedBooking[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export const BookingsList = ({ bookings, emptyMessage, onStatusChange }: BookingsListProps) => {
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const { toast } = useToast();
-
-  useEffect(() => {
-    const fetchBookings = async () => {
-      setIsLoading(true);
-      try {
-        const userBookings = await getUserBookings(userId);
-        setBookings(userBookings);
-      } catch (error) {
-        console.error("Error fetching bookings:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load your bookings",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchBookings();
-  }, [userId, toast]);
 
   const handleCancelBooking = async (bookingId: string) => {
     setCancellingId(bookingId);
     try {
-      const success = await updateBookingStatus(bookingId, "canceled");
+      const success = await cancelBooking(bookingId);
       if (success) {
-        setBookings(
-          bookings.map((booking) =>
-            booking.id === bookingId
-              ? { ...booking, status: "canceled" }
-              : booking
-          )
-        );
         toast({
           title: "Booking Canceled",
           description: "Your booking has been successfully canceled",
         });
+        
+        if (onStatusChange) {
+          onStatusChange();
+        }
       }
     } catch (error) {
       console.error("Error canceling booking:", error);
@@ -99,24 +75,15 @@ export const BookingsList = ({ userId }: BookingsListProps) => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center py-16">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-lg">Loading bookings...</span>
-      </div>
-    );
-  }
-
   if (bookings.length === 0) {
     return (
       <div className="text-center py-16 bg-muted/30 rounded-lg">
         <div className="text-muted-foreground mb-4">
           <Calendar className="w-16 h-16 mx-auto opacity-40" />
         </div>
-        <h3 className="text-xl font-semibold mb-2">No Bookings Yet</h3>
+        <h3 className="text-xl font-semibold mb-2">No Bookings</h3>
         <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-          You haven't made any bookings yet. Start exploring available courts and book your first session!
+          {emptyMessage}
         </p>
         <Button asChild>
           <a href="/courts">Find Courts</a>
@@ -127,8 +94,6 @@ export const BookingsList = ({ userId }: BookingsListProps) => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Your Bookings</h2>
-      
       <div className="grid grid-cols-1 gap-4">
         {bookings.map((booking) => (
           <Card key={booking.id} className="overflow-hidden border-0 shadow-md">
@@ -171,7 +136,7 @@ export const BookingsList = ({ userId }: BookingsListProps) => {
                       </div>
                       
                       <div className="flex items-center justify-end">
-                        {booking.status === "pending" && (
+                        {booking.status !== "canceled" && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
@@ -204,43 +169,6 @@ export const BookingsList = ({ userId }: BookingsListProps) => {
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
-                        )}
-                        
-                        {booking.status === "confirmed" && (
-                          <div className="text-right">
-                            <div className="flex items-center justify-end mb-2 text-green-600">
-                              <CheckCircle className="w-5 h-5 mr-2" />
-                              <span className="font-medium">Confirmed</span>
-                            </div>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="border-destructive text-destructive hover:bg-destructive/10"
-                                >
-                                  Cancel Booking
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Cancel Confirmed Booking</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Cancelling a confirmed booking may incur a cancellation fee. Are you sure you want to proceed?
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Keep Booking</AlertDialogCancel>
-                                  <AlertDialogAction 
-                                    onClick={() => handleCancelBooking(booking.id)}
-                                    className="bg-destructive hover:bg-destructive/90"
-                                  >
-                                    Yes, Cancel
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
                         )}
                         
                         {booking.status === "canceled" && (
