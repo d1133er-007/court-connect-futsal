@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Booking, Court, ExtendedBooking, Payment, TimeSlot, User, mapDbBooking, mapDbCourt, mapDbTimeSlot, mapDbUser } from '@/types';
 
@@ -30,29 +29,39 @@ export const signOut = async () => {
 };
 
 export const getCurrentUser = async (): Promise<User | null> => {
-  const { data: authData, error: authError } = await supabase.auth.getUser();
-  if (authError || !authData.user) return null;
-  
-  // Fetch additional user data from the profiles table
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', authData.user.id)
-    .single();
+  try {
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData.user) return null;
     
-  if (profileError || !profile) return null;
-  
-  return mapDbUser(profile);
+    // Fetch additional user data from the profiles table
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authData.user.id)
+      .single();
+      
+    if (profileError || !profile) return null;
+    
+    return mapDbUser(profile);
+  } catch (error) {
+    console.error("Error getting current user:", error);
+    return null;
+  }
 };
 
 // Court functions
 export const getCourts = async (): Promise<Court[]> => {
-  const { data, error } = await supabase
-    .from('courts')
-    .select('*');
-    
-  if (error) throw error;
-  return data ? data.map(mapDbCourt) : [];
+  try {
+    const { data, error } = await supabase
+      .from('courts')
+      .select('*');
+      
+    if (error) throw error;
+    return data ? data.map(mapDbCourt) : [];
+  } catch (error) {
+    console.error("Error fetching courts:", error);
+    throw error;
+  }
 };
 
 export const getCourtById = async (id: string): Promise<Court | null> => {

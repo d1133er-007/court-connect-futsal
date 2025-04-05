@@ -7,7 +7,7 @@ import { getCourts } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, Filter } from "lucide-react";
+import { Search, Loader2, Filter, AlertTriangle } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -26,11 +26,13 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Slider } from "@/components/ui/slider";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 const Courts = () => {
   const [courts, setCourts] = useState<Court[]>([]);
   const [filteredCourts, setFilteredCourts] = useState<Court[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [priceRange, setPriceRange] = useState([0, 100]);
   const [sortBy, setSortBy] = useState("recommended");
@@ -39,12 +41,15 @@ const Courts = () => {
 
   useEffect(() => {
     const fetchCourts = async () => {
+      setIsLoading(true);
+      setError(null);
       try {
         const allCourts = await getCourts();
         setCourts(allCourts);
         setFilteredCourts(allCourts);
       } catch (error) {
         console.error("Error fetching courts:", error);
+        setError("Failed to load courts data");
         toast({
           title: "Error",
           description: "Failed to load courts data",
@@ -138,6 +143,17 @@ const Courts = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
+      
+      {/* Error Alert */}
+      {error && (
+        <div className="container mx-auto px-4 pt-4">
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        </div>
+      )}
       
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6">Find Your Perfect Court</h1>
@@ -255,6 +271,16 @@ const Courts = () => {
           <div className="flex justify-center items-center py-20">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
             <span className="ml-2 text-lg">Loading courts...</span>
+          </div>
+        ) : error ? (
+          <div className="text-center py-16 bg-muted/30 rounded-lg">
+            <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4 opacity-70" />
+            <h3 className="text-xl font-semibold mb-2">Error Loading Courts</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              We encountered a problem while loading the courts data. 
+              Please try again later.
+            </p>
+            <Button onClick={() => window.location.reload()}>Retry</Button>
           </div>
         ) : filteredCourts.length === 0 ? (
           <div className="text-center py-16 bg-muted/30 rounded-lg">

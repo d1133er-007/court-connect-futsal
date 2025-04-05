@@ -7,15 +7,19 @@ import { CourtCard } from "@/components/CourtCard";
 import { Court } from "@/types";
 import { getCourts } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, Clock, CreditCard, MapPin, Users } from "lucide-react";
+import { Calendar, Clock, CreditCard, MapPin, Users, AlertTriangle } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 const Index = () => {
   const [courts, setCourts] = useState<Court[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchCourts = async () => {
+      setIsLoading(true);
+      setError(null);
       try {
         const allCourts = await getCourts();
         // Get top rated courts for the homepage
@@ -25,6 +29,7 @@ const Index = () => {
         setCourts(topCourts);
       } catch (error) {
         console.error("Error fetching courts:", error);
+        setError("Failed to load courts data");
         toast({
           title: "Error",
           description: "Failed to load courts data",
@@ -75,6 +80,17 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
+      
+      {/* Error Alert */}
+      {error && (
+        <div className="container mx-auto px-4 pt-4">
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        </div>
+      )}
       
       {/* Hero Section */}
       <section className="bg-court-green text-white">
@@ -156,14 +172,32 @@ const Index = () => {
             </Link>
           </div>
           
-          <div className="court-container">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {isLoading
               ? featuredCourts.map((court) => (
                   <CourtCard key={court.id} court={court} />
                 ))
-              : courts.map((court) => (
-                  <CourtCard key={court.id} court={court} />
-                ))}
+              : courts.length > 0 
+                ? courts.map((court) => (
+                    <CourtCard key={court.id} court={court} />
+                  ))
+                : error 
+                  ? (
+                    <div className="col-span-3 text-center py-12">
+                      <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4 opacity-70" />
+                      <p className="text-lg text-muted-foreground">
+                        Unable to load court data. Please try again later.
+                      </p>
+                    </div>
+                  )
+                  : (
+                    <div className="col-span-3 text-center py-12">
+                      <p className="text-lg text-muted-foreground">
+                        No courts available at the moment.
+                      </p>
+                    </div>
+                  )
+            }
           </div>
         </div>
       </section>
