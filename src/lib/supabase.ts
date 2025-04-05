@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Booking, Court, ExtendedBooking, Payment, TimeSlot, User, mapDbBooking, mapDbCourt, mapDbTimeSlot, mapDbUser } from '@/types';
 
@@ -50,17 +51,27 @@ export const getCurrentUser = async (): Promise<User | null> => {
 };
 
 // Court functions
-export const getCourts = async (): Promise<Court[]> => {
+export const getCourts = async (): Promise<{ data: Court[] | null; error: Error | null }> => {
   try {
     const { data, error } = await supabase
       .from('courts')
       .select('*');
       
-    if (error) throw error;
-    return data ? data.map(mapDbCourt) : [];
+    if (error) {
+      console.error("Supabase error fetching courts:", error);
+      return { data: null, error: new Error(error.message) };
+    }
+    
+    return { 
+      data: data ? data.map(mapDbCourt) : [], 
+      error: null 
+    };
   } catch (error) {
-    console.error("Error fetching courts:", error);
-    throw error;
+    console.error("Exception fetching courts:", error);
+    return { 
+      data: null, 
+      error: error instanceof Error ? error : new Error('Unknown error fetching courts') 
+    };
   }
 };
 
