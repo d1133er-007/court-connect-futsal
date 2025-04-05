@@ -101,7 +101,7 @@ const Index = () => {
                   </CardHeader>
                   <CardContent>
                     <p className="line-clamp-2 text-gray-600">{court.description}</p>
-                    <p className="mt-2 text-blue-600 font-semibold">${court.pricePerHour}/hour</p>
+                    <p className="mt-2 text-blue-600 font-semibold">Rs. {court.pricePerHour}/hour</p>
                   </CardContent>
                   <CardFooter>
                     <Link to={`/courts/${court.id}`} className="w-full">

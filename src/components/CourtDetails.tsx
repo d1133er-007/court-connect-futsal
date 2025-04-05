@@ -151,7 +151,7 @@ export const CourtDetails = ({ court }: CourtDetailsProps) => {
           <div className="flex justify-between items-center">
             <div className="text-xl font-bold text-court-green flex items-center">
               <DollarSign className="w-5 h-5" />
-              <span>${court.pricePerHour}</span>
+              <span>Rs. {court.pricePerHour}</span>
             </div>
             <div className="text-gray-600">per hour</div>
           </div>

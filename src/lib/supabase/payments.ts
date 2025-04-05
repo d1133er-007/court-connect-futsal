@@ -14,7 +14,7 @@ export const createPayment = async (
       booking_id: bookingId,
       user_id: userId,
       amount,
-      currency: 'USD',
+      currency: 'NPR',
       status: 'pending',
       payment_method: 'card',
     })

@@ -53,7 +53,7 @@ export const CourtCard = ({ court }: CourtCardProps) => {
       <CardFooter className="flex justify-between items-center pt-0 pb-4">
         <div className="flex items-center text-primary font-bold">
           <DollarSign className="h-4 w-4" />
-          <span>${court.pricePerHour}</span>
+          <span>Rs. {court.pricePerHour}</span>
           <span className="text-xs font-normal text-muted-foreground ml-1">/hour</span>
         </div>
         <Button size="sm" asChild>

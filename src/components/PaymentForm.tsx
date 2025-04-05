@@ -160,7 +160,7 @@ export const PaymentForm = ({ booking, court, timeSlot }: PaymentFormProps) => {
             <Clock className="h-4 w-4 mr-1 text-gray-400" />
             {format(parseISO(timeSlot.startTime), 'h:mm a')} - {format(parseISO(timeSlot.endTime), 'h:mm a')}
           </div>
-          <div className="text-lg font-bold mt-2">${court.pricePerHour.toFixed(2)}</div>
+          <div className="text-lg font-bold mt-2">Rs. {court.pricePerHour.toFixed(2)}</div>
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -236,7 +236,7 @@ export const PaymentForm = ({ booking, court, timeSlot }: PaymentFormProps) => {
                 Processing...
               </>
             ) : (
-              `Pay $${court.pricePerHour.toFixed(2)}`
+              `Pay Rs. ${court.pricePerHour.toFixed(2)}`
             )}
           </Button>
         </form>
