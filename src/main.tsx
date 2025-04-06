@@ -5,7 +5,7 @@ import './index.css'
 import { AnimatePresence } from 'framer-motion'
 
 createRoot(document.getElementById("root")!).render(
-  <AnimatePresence mode="wait">
+  <AnimatePresence mode="wait" initial={false}>
     <App />
   </AnimatePresence>
 );
