@@ -1,14 +1,14 @@
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Booking, Court, TimeSlot } from '@/types';
-import { createPayment, updateBookingStatus } from '@/lib/supabase';
+import { updateBookingStatus, createPayment } from '@/lib/supabase';
 import { format, parseISO } from 'date-fns';
-import { Loader2, CreditCard, Calendar, Clock } from 'lucide-react';
+import { Loader2, CreditCard, Calendar, Clock, ExternalLink } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PaymentFormProps {
   booking: Booking;
@@ -17,91 +17,84 @@ interface PaymentFormProps {
 }
 
 export const PaymentForm = ({ booking, court, timeSlot }: PaymentFormProps) => {
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardName, setCardName] = useState('');
-  const [expiryDate, setExpiryDate] = useState('');
-  const [cvv, setCvv] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  const formatCardNumber = (value: string) => {
-    // Remove all non-digit characters
-    const digits = value.replace(/\D/g, '');
+  const location = useLocation();
+  
+  // Check for query parameters when returning from Stripe
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const status = searchParams.get('status');
+    const bookingId = searchParams.get('booking_id');
+    const sessionId = searchParams.get('session_id');
     
-    // Format with spaces every 4 digits
-    const formatted = digits.replace(/(\d{4})(?=\d)/g, '$1 ');
-    
-    // Only return at most 19 characters (16 digits + 3 spaces)
-    return formatted.substring(0, 19);
-  };
-
-  const formatExpiryDate = (value: string) => {
-    // Remove all non-digit characters
-    const digits = value.replace(/\D/g, '');
-    
-    // Format as MM/YY
-    if (digits.length > 2) {
-      return `${digits.substring(0, 2)}/${digits.substring(2, 4)}`;
+    if (status && bookingId && bookingId === booking.id) {
+      if (status === 'success' && sessionId) {
+        toast({
+          title: 'Payment Successful',
+          description: 'Your booking has been confirmed',
+        });
+        
+        // Remove query parameters and navigate to bookings
+        setTimeout(() => {
+          navigate('/bookings', { replace: true });
+        }, 2000);
+      } else if (status === 'canceled') {
+        toast({
+          title: 'Payment Canceled',
+          description: 'Your payment was not completed',
+          variant: 'destructive',
+        });
+      }
     }
-    
-    return digits;
+  }, [location, booking.id, toast, navigate]);
+
+  const handlePayWithStripe = async () => {
+    try {
+      setIsProcessing(true);
+      
+      // Call our Supabase Edge Function to create a Stripe checkout session
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: {
+          bookingId: booking.id,
+          courtName: court.name,
+          amount: court.pricePerHour,
+          returnUrl: window.location.origin + '/payment/' + booking.id,
+        },
+      });
+      
+      if (error) {
+        console.error('Error creating checkout session:', error);
+        throw new Error('Failed to initialize payment');
+      }
+      
+      if (data?.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        throw new Error('Invalid response from payment service');
+      }
+    } catch (error: any) {
+      console.error('Payment error:', error);
+      toast({
+        title: 'Payment Failed',
+        description: error.message || 'An error occurred during payment processing',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCardNumber(formatCardNumber(e.target.value));
-  };
-
-  const handleExpiryDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setExpiryDate(formatExpiryDate(e.target.value));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Legacy payment method (for demonstration only)
+  const handleSubmitMockPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Basic validation
-    if (cardNumber.replace(/\s/g, '').length !== 16) {
-      toast({
-        title: 'Invalid Card Number',
-        description: 'Please enter a valid 16-digit card number',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    if (!cardName.trim()) {
-      toast({
-        title: 'Name Required',
-        description: 'Please enter the name on your card',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    if (expiryDate.length !== 5) {
-      toast({
-        title: 'Invalid Expiry Date',
-        description: 'Please enter a valid expiry date (MM/YY)',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    if (cvv.length < 3) {
-      toast({
-        title: 'Invalid CVV',
-        description: 'Please enter a valid CVV code',
-        variant: 'destructive',
-      });
-      return;
-    }
     
     setIsLoading(true);
     
     try {
-      // In a real app, this would integrate with a payment processor
-      // Here we'll just simulate a successful payment
-      
       // Create a payment record
       const payment = await createPayment(
         booking.id,
@@ -163,83 +156,51 @@ export const PaymentForm = ({ booking, court, timeSlot }: PaymentFormProps) => {
           <div className="text-lg font-bold mt-2">Rs. {court.pricePerHour.toFixed(2)}</div>
         </div>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="cardNumber" className="text-sm font-medium">
-              Card Number
-            </label>
-            <div className="relative">
-              <Input
-                id="cardNumber"
-                placeholder="1234 5678 9012 3456"
-                value={cardNumber}
-                onChange={handleCardNumberChange}
-                maxLength={19}
-                required
-                disabled={isLoading}
-              />
-              <CreditCard className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <label htmlFor="cardName" className="text-sm font-medium">
-              Name on Card
-            </label>
-            <Input
-              id="cardName"
-              placeholder="John Doe"
-              value={cardName}
-              onChange={(e) => setCardName(e.target.value)}
-              required
-              disabled={isLoading}
-            />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="expiryDate" className="text-sm font-medium">
-                Expiry Date
-              </label>
-              <Input
-                id="expiryDate"
-                placeholder="MM/YY"
-                value={expiryDate}
-                onChange={handleExpiryDateChange}
-                maxLength={5}
-                required
-                disabled={isLoading}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="cvv" className="text-sm font-medium">
-                CVV
-              </label>
-              <Input
-                id="cvv"
-                placeholder="123"
-                value={cvv}
-                onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').substring(0, 4))}
-                type="password"
-                maxLength={4}
-                required
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-          
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? (
+        <div className="space-y-4">
+          <Button 
+            onClick={handlePayWithStripe} 
+            className="w-full bg-[#6772E5] hover:bg-[#5469D4]"
+            disabled={isProcessing}
+          >
+            {isProcessing ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
+                Redirecting to Stripe...
               </>
             ) : (
-              `Pay Rs. ${court.pricePerHour.toFixed(2)}`
+              <>
+                <CreditCard className="mr-2 h-4 w-4" />
+                Pay with Stripe (Rs. {court.pricePerHour.toFixed(2)})
+              </>
             )}
           </Button>
-        </form>
+          
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-gray-500">Or</span>
+            </div>
+          </div>
+          
+          <form onSubmit={handleSubmitMockPayment} className="space-y-4">
+            <div className="text-sm text-center text-gray-500 mb-2">
+              Use test payment method below
+            </div>
+            
+            <Button type="submit" className="w-full" variant="outline" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                `Test Payment (Rs. ${court.pricePerHour.toFixed(2)})`
+              )}
+            </Button>
+          </form>
+        </div>
       </CardContent>
       
       <CardFooter className="flex justify-center text-xs text-gray-500">

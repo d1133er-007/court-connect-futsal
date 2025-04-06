@@ -2,19 +2,21 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { CourtCard } from '@/components/CourtCard';
 import { getCourts } from '@/lib/supabase';
 import { Court } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import AnimatedPage from '@/components/AnimatedPage';
+import { useToast } from '@/hooks/use-toast';
 
 const Courts = () => {
   const [courts, setCourts] = useState<Court[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { toast } = useToast();
 
   const fetchCourts = async (showRefreshAnimation = false) => {
     if (showRefreshAnimation) {
@@ -31,13 +33,32 @@ const Courts = () => {
         console.error('Error fetching courts:', error);
         setError(error.message || 'Failed to load courts. Please try again.');
         setCourts([]);
+        
+        toast({
+          title: "Error",
+          description: "Failed to load courts. Please try again.",
+          variant: "destructive",
+        });
       } else {
         setCourts(data || []);
+        
+        if (showRefreshAnimation) {
+          toast({
+            title: "Success",
+            description: "Courts refreshed successfully!",
+          });
+        }
       }
     } catch (err) {
       console.error('Unexpected error in fetchCourts:', err);
       setError('An unexpected error occurred. Please try again.');
       setCourts([]);
+      
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
       if (showRefreshAnimation) {
@@ -104,8 +125,10 @@ const Courts = () => {
               disabled={loading || isRefreshing}
               className="flex items-center gap-2"
             >
-              {isRefreshing && (
+              {isRefreshing ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
               )}
               Refresh
             </Button>
