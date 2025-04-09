@@ -28,6 +28,7 @@ export interface MenuItem {
 export const defaultMenuItems: MenuItem[] = [
   { path: "/", label: "Home" },
   { path: "/courts", label: "Find Courts" },
+  { path: "/tasks", label: "Tasks", authRequired: true },
   { path: "/bookings", label: "My Bookings", authRequired: true },
   { path: "/admin", label: "Admin", adminRequired: true },
 ];
