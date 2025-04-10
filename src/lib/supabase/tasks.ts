@@ -15,8 +15,22 @@ export const getTasks = async (): Promise<{ data: Task[] | null; error: Error | 
       return { data: null, error: new Error(error.message) };
     }
     
+    // Map database fields to our Task interface
+    const mappedData = data ? data.map(item => ({
+      id: item.id,
+      user_id: item.user_id,
+      project_id: item.project_id || undefined,
+      title: item.title,
+      description: item.description || undefined,
+      priority: item.priority as 'low' | 'medium' | 'high',
+      dueDate: item.due_date,
+      completed: item.completed,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at
+    })) : [];
+    
     return { 
-      data: data as Task[] || [], 
+      data: mappedData as Task[], 
       error: null 
     };
   } catch (error) {
@@ -51,7 +65,21 @@ export const createTask = async (
       return { data: null, error: new Error(error.message) };
     }
     
-    return { data: data as Task, error: null };
+    // Map database fields to our Task interface
+    const mappedData = {
+      id: data.id,
+      user_id: data.user_id,
+      project_id: data.project_id || undefined,
+      title: data.title,
+      description: data.description || undefined,
+      priority: data.priority as 'low' | 'medium' | 'high',
+      dueDate: data.due_date,
+      completed: data.completed,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
+    };
+    
+    return { data: mappedData as Task, error: null };
   } catch (error) {
     console.error("Exception creating task:", error);
     return { 
@@ -85,7 +113,21 @@ export const updateTask = async (
       return { data: null, error: new Error(error.message) };
     }
     
-    return { data: data as Task, error: null };
+    // Map database fields to our Task interface
+    const mappedData = {
+      id: data.id,
+      user_id: data.user_id,
+      project_id: data.project_id || undefined,
+      title: data.title,
+      description: data.description || undefined,
+      priority: data.priority as 'low' | 'medium' | 'high',
+      dueDate: data.due_date,
+      completed: data.completed,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
+    };
+    
+    return { data: mappedData as Task, error: null };
   } catch (error) {
     console.error("Exception updating task:", error);
     return { 
@@ -130,8 +172,18 @@ export const getProjects = async (): Promise<{ data: Project[] | null; error: Er
       return { data: null, error: new Error(error.message) };
     }
     
+    // Map database fields to our Project interface
+    const mappedData = data ? data.map(item => ({
+      id: item.id,
+      user_id: item.user_id,
+      name: item.name,
+      description: item.description || undefined,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at
+    })) : [];
+    
     return { 
-      data: data as Project[] || [], 
+      data: mappedData as Project[], 
       error: null 
     };
   } catch (error) {
@@ -164,7 +216,17 @@ export const createProject = async (
       return { data: null, error: new Error(error.message) };
     }
     
-    return { data: data as Project, error: null };
+    // Map database fields to our Project interface
+    const mappedData = {
+      id: data.id,
+      user_id: data.user_id,
+      name: data.name,
+      description: data.description || undefined,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
+    };
+    
+    return { data: mappedData as Project, error: null };
   } catch (error) {
     console.error("Exception creating project:", error);
     return { 
