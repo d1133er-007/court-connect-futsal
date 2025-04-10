@@ -94,7 +94,7 @@ export const updateTask = async (
   updates: Partial<TaskFormValues & { completed?: boolean }>
 ): Promise<{ data: Task | null; error: Error | null }> => {
   try {
-    const updateData: any = {};
+    const updateData: Record<string, any> = {};
     if (updates.title !== undefined) updateData.title = updates.title;
     if (updates.description !== undefined) updateData.description = updates.description;
     if (updates.priority !== undefined) updateData.priority = updates.priority;
