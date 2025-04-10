@@ -6,3 +6,4 @@ export * from './bookings';
 export * from './payments';
 export * from './profile';
 export * from './tasks';
+export * from './projects';

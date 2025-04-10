@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Task, TaskFormValues, Project } from '@/types/tasks';
+import { Task, TaskFormValues } from '@/types/tasks';
 
 // Task functions
 export const getTasks = async (): Promise<{ data: Task[] | null; error: Error | null }> => {
@@ -155,83 +155,6 @@ export const deleteTask = async (taskId: string): Promise<{ success: boolean; er
     return { 
       success: false, 
       error: error instanceof Error ? error : new Error('Unknown error deleting task') 
-    };
-  }
-};
-
-// Project functions
-export const getProjects = async (): Promise<{ data: Project[] | null; error: Error | null }> => {
-  try {
-    const { data, error } = await supabase
-      .from('projects')
-      .select('*')
-      .order('created_at', { ascending: false });
-      
-    if (error) {
-      console.error("Supabase error fetching projects:", error);
-      return { data: null, error: new Error(error.message) };
-    }
-    
-    // Map database fields to our Project interface
-    const mappedData = data ? data.map(item => ({
-      id: item.id,
-      user_id: item.user_id,
-      name: item.name,
-      description: item.description || undefined,
-      createdAt: item.created_at,
-      updatedAt: item.updated_at
-    })) : [];
-    
-    return { 
-      data: mappedData as Project[], 
-      error: null 
-    };
-  } catch (error) {
-    console.error("Exception fetching projects:", error);
-    return { 
-      data: null, 
-      error: error instanceof Error ? error : new Error('Unknown error fetching projects') 
-    };
-  }
-};
-
-export const createProject = async (
-  userId: string,
-  name: string,
-  description?: string
-): Promise<{ data: Project | null; error: Error | null }> => {
-  try {
-    const { data, error } = await supabase
-      .from('projects')
-      .insert({
-        user_id: userId,
-        name,
-        description: description || null
-      })
-      .select()
-      .single();
-      
-    if (error) {
-      console.error("Error creating project:", error);
-      return { data: null, error: new Error(error.message) };
-    }
-    
-    // Map database fields to our Project interface
-    const mappedData = {
-      id: data.id,
-      user_id: data.user_id,
-      name: data.name,
-      description: data.description || undefined,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at
-    };
-    
-    return { data: mappedData as Project, error: null };
-  } catch (error) {
-    console.error("Exception creating project:", error);
-    return { 
-      data: null, 
-      error: error instanceof Error ? error : new Error('Unknown error creating project') 
     };
   }
 };
