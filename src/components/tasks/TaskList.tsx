@@ -1,11 +1,13 @@
 
 import React from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { Task } from '@/types/tasks';
 import { TaskItem } from './TaskItem';
 import { TasksEmpty } from './TasksEmpty';
 import { TasksLoading } from './TasksLoading';
-import { Button } from '@/components/ui/button';
+import { TaskListError } from './TaskListError';
+import { TaskListFiltered } from './TaskListFiltered';
+import { TaskListItems } from './TaskListItems';
 
 interface TaskListProps {
   tasks: Task[];
@@ -37,41 +39,20 @@ export const TaskList = ({
       {loading ? (
         <TasksLoading />
       ) : error ? (
-        <div className="text-center py-8">
-          <p className="text-red-500 mb-4">{error}</p>
-          <Button variant="outline" onClick={() => fetchTasks()}>
-            Try Again
-          </Button>
-        </div>
+        <TaskListError error={error} fetchTasks={fetchTasks} />
       ) : filteredTasks.length === 0 ? (
         tasks.length === 0 ? (
           <TasksEmpty onCreateTask={onCreateTask} />
         ) : (
-          <div className="text-center py-12 mt-6">
-            <p className="text-gray-500">No tasks match your filters</p>
-            <Button 
-              variant="outline" 
-              onClick={onClearFilters}
-              className="mt-4"
-            >
-              Clear Filters
-            </Button>
-          </div>
+          <TaskListFiltered onClearFilters={onClearFilters} />
         )
       ) : (
-        <div className="space-y-1 mt-4">
-          <AnimatePresence initial={false}>
-            {filteredTasks.map((task) => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                onComplete={onToggleComplete}
-                onEdit={onEditTask}
-                onDelete={onDeleteTask}
-              />
-            ))}
-          </AnimatePresence>
-        </div>
+        <TaskListItems
+          filteredTasks={filteredTasks}
+          onToggleComplete={onToggleComplete}
+          onEditTask={onEditTask}
+          onDeleteTask={onDeleteTask}
+        />
       )}
     </AnimatePresence>
   );
