@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Task } from '@/types/tasks';
 import { TaskItem } from './TaskItem';
 
@@ -17,7 +17,12 @@ export const TaskListItems = ({
   onEditTask,
   onDeleteTask
 }: TaskListItemsProps) => (
-  <div className="space-y-1 mt-4">
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="space-y-2 mt-6"
+  >
     <AnimatePresence initial={false}>
       {filteredTasks.map((task) => (
         <TaskItem
@@ -29,5 +34,5 @@ export const TaskListItems = ({
         />
       ))}
     </AnimatePresence>
-  </div>
+  </motion.div>
 );
