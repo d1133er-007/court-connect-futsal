@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { TaskFormValues } from '@/types/tasks';
+import { PriorityLevel } from '@/types/tasks';
 import {
   FormField,
   FormItem,
@@ -17,15 +17,16 @@ import {
   SelectValue
 } from '@/components/ui/select';
 
-interface TaskPriorityFieldProps {
-  form: UseFormReturn<TaskFormValues>;
+// Use a generic type parameter to make this component more flexible
+interface TaskPriorityFieldProps<T extends { priority: PriorityLevel }> {
+  form: UseFormReturn<T>;
 }
 
-export const TaskPriorityField: React.FC<TaskPriorityFieldProps> = ({ form }) => {
+export const TaskPriorityField = <T extends { priority: PriorityLevel }>({ form }: TaskPriorityFieldProps<T>) => {
   return (
     <FormField
       control={form.control}
-      name="priority"
+      name="priority" as="priority"
       render={({ field }) => (
         <FormItem>
           <FormLabel>Priority</FormLabel>

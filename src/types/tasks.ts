@@ -15,7 +15,7 @@ export interface Task {
 }
 
 export interface TaskFormValues {
-  title: string;
+  title: string; // required field
   description?: string;
   priority: PriorityLevel;
   dueDate?: Date;

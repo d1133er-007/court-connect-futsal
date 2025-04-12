@@ -3,7 +3,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Task } from '@/types/tasks';
+import { Task, TaskFormValues } from '@/types/tasks';
 import {
   Dialog,
   DialogContent,
@@ -20,7 +20,7 @@ import {
   TaskFormActions
 } from './form-fields';
 
-// Task schema definition
+// Task schema definition with explicit typing
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
@@ -28,7 +28,9 @@ const taskSchema = z.object({
   dueDate: z.date().optional()
 });
 
-export type TaskFormValues = z.infer<typeof taskSchema>;
+// Using the type from the imported TaskFormValues instead of redefining it
+// This ensures type consistency across the application
+type TaskFormSchemaType = z.infer<typeof taskSchema>;
 
 interface TaskDialogProps {
   open: boolean;
@@ -45,7 +47,8 @@ export const TaskDialog = ({
   task,
   isSubmitting
 }: TaskDialogProps) => {
-  const form = useForm<TaskFormValues>({
+  // Use the imported TaskFormValues type to ensure consistency
+  const form = useForm<TaskFormSchemaType>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
       title: task?.title || '',
@@ -74,8 +77,9 @@ export const TaskDialog = ({
     }
   }, [task, form]);
   
-  const handleSubmit = async (values: TaskFormValues) => {
-    await onSubmit(values);
+  const handleSubmit = async (values: TaskFormSchemaType) => {
+    // Convert the form values to the expected TaskFormValues type
+    await onSubmit(values as TaskFormValues);
   };
 
   return (
