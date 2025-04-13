@@ -3,7 +3,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Task, TaskFormValues } from '@/types/tasks';
+import { Task, TaskFormValues, PriorityLevel } from '@/types/tasks';
 import {
   Dialog,
   DialogContent,
@@ -20,16 +20,15 @@ import {
   TaskFormActions
 } from './form-fields';
 
-// Task schema definition with explicit typing
+// Task schema definition that matches TaskFormValues
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
-  priority: z.enum(['low', 'medium', 'high']),
+  priority: z.enum(['low', 'medium', 'high'] as const),
   dueDate: z.date().optional()
 });
 
-// Using the type from the imported TaskFormValues instead of redefining it
-// This ensures type consistency across the application
+// This ensures type consistency with TaskFormValues
 type TaskFormSchemaType = z.infer<typeof taskSchema>;
 
 interface TaskDialogProps {
@@ -47,13 +46,13 @@ export const TaskDialog = ({
   task,
   isSubmitting
 }: TaskDialogProps) => {
-  // Use the imported TaskFormValues type to ensure consistency
+  // Use the TaskFormSchemaType which matches TaskFormValues
   const form = useForm<TaskFormSchemaType>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
       title: task?.title || '',
       description: task?.description || '',
-      priority: task?.priority || 'medium',
+      priority: (task?.priority || 'medium') as PriorityLevel,
       dueDate: task?.dueDate ? new Date(task.dueDate) : undefined
     }
   });
@@ -78,8 +77,8 @@ export const TaskDialog = ({
   }, [task, form]);
   
   const handleSubmit = async (values: TaskFormSchemaType) => {
-    // Convert the form values to the expected TaskFormValues type
-    await onSubmit(values as TaskFormValues);
+    // The values are already of the correct type
+    await onSubmit(values);
   };
 
   return (

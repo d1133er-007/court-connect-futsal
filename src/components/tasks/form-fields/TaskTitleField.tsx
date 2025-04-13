@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { UseFormReturn } from 'react-hook-form';
+import { UseFormReturn, Path } from 'react-hook-form';
 import {
   FormField,
   FormItem,
@@ -19,7 +19,7 @@ export const TaskTitleField = <T extends { title: string }>({ form }: TaskTitleF
   return (
     <FormField
       control={form.control}
-      name="title" as="title"
+      name="title" as={`title` as Path<T>}
       render={({ field }) => (
         <FormItem>
           <FormLabel>Title</FormLabel>

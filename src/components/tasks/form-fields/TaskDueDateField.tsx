@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { UseFormReturn } from 'react-hook-form';
+import { UseFormReturn, Path } from 'react-hook-form';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -24,7 +24,7 @@ export const TaskDueDateField = <T extends { dueDate?: Date }>({ form }: TaskDue
   return (
     <FormField
       control={form.control}
-      name="dueDate" as="dueDate"
+      name="dueDate" as={`dueDate` as Path<T>}
       render={({ field }) => (
         <FormItem className="flex flex-col">
           <FormLabel>Due Date</FormLabel>

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { UseFormReturn } from 'react-hook-form';
+import { UseFormReturn, Path } from 'react-hook-form';
 import {
   FormField,
   FormItem,
@@ -19,7 +19,7 @@ export const TaskDescriptionField = <T extends { description?: string }>({ form 
   return (
     <FormField
       control={form.control}
-      name="description" as="description"
+      name="description" as={`description` as Path<T>}
       render={({ field }) => (
         <FormItem>
           <FormLabel>Description</FormLabel>
@@ -28,6 +28,7 @@ export const TaskDescriptionField = <T extends { description?: string }>({ form 
               placeholder="Add details about your task"
               rows={3}
               {...field}
+              value={field.value || ''}
             />
           </FormControl>
           <FormMessage />
