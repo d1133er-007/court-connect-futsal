@@ -19,7 +19,7 @@ export const TaskTitleField = <T extends { title: string }>({ form }: TaskTitleF
   return (
     <FormField
       control={form.control}
-      name="title" as={`title` as Path<T>}
+      name={"title" as Path<T>}
       render={({ field }) => (
         <FormItem>
           <FormLabel>Title</FormLabel>

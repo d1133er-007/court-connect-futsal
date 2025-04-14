@@ -24,7 +24,7 @@ export const TaskDueDateField = <T extends { dueDate?: Date }>({ form }: TaskDue
   return (
     <FormField
       control={form.control}
-      name="dueDate" as={`dueDate` as Path<T>}
+      name={"dueDate" as Path<T>}
       render={({ field }) => (
         <FormItem className="flex flex-col">
           <FormLabel>Due Date</FormLabel>
@@ -53,6 +53,7 @@ export const TaskDueDateField = <T extends { dueDate?: Date }>({ form }: TaskDue
                 selected={field.value}
                 onSelect={field.onChange}
                 initialFocus
+                className={cn("p-3 pointer-events-auto")}
               />
             </PopoverContent>
           </Popover>

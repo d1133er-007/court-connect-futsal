@@ -47,7 +47,7 @@ export const TaskDialog = ({
   isSubmitting
 }: TaskDialogProps) => {
   // Use the TaskFormSchemaType which matches TaskFormValues
-  const form = useForm<TaskFormSchemaType>({
+  const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
       title: task?.title || '',
@@ -76,8 +76,7 @@ export const TaskDialog = ({
     }
   }, [task, form]);
   
-  const handleSubmit = async (values: TaskFormSchemaType) => {
-    // The values are already of the correct type
+  const handleSubmit = async (values: TaskFormValues) => {
     await onSubmit(values);
   };
 

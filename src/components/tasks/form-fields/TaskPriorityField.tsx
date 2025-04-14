@@ -26,7 +26,7 @@ export const TaskPriorityField = <T extends { priority: PriorityLevel }>({ form 
   return (
     <FormField
       control={form.control}
-      name="priority" as={`priority` as Path<T>}
+      name={"priority" as Path<T>}
       render={({ field }) => (
         <FormItem>
           <FormLabel>Priority</FormLabel>
