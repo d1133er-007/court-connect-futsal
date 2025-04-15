@@ -28,9 +28,6 @@ const taskSchema = z.object({
   dueDate: z.date().optional()
 });
 
-// This ensures type consistency with TaskFormValues
-type TaskFormSchemaType = z.infer<typeof taskSchema>;
-
 interface TaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -46,7 +43,7 @@ export const TaskDialog = ({
   task,
   isSubmitting
 }: TaskDialogProps) => {
-  // Use the TaskFormSchemaType which matches TaskFormValues
+  // Use TaskFormValues directly to match the expected type
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
