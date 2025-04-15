@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { UseFormReturn, Path } from 'react-hook-form';
+import { UseFormReturn } from 'react-hook-form';
 import {
   FormField,
   FormItem,
@@ -9,17 +9,17 @@ import {
   FormMessage
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
+import { TaskFormValues } from '@/types/tasks';
 
-// Use a generic type parameter to make this component more flexible
-interface TaskDescriptionFieldProps<T extends { description?: string }> {
-  form: UseFormReturn<T>;
+interface TaskDescriptionFieldProps {
+  form: UseFormReturn<TaskFormValues>;
 }
 
-export const TaskDescriptionField = <T extends { description?: string }>({ form }: TaskDescriptionFieldProps<T>) => {
+export const TaskDescriptionField = ({ form }: TaskDescriptionFieldProps) => {
   return (
     <FormField
       control={form.control}
-      name={"description" as Path<T>}
+      name="description"
       render={({ field }) => (
         <FormItem>
           <FormLabel>Description</FormLabel>

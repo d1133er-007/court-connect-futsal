@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { UseFormReturn, Path } from 'react-hook-form';
+import { UseFormReturn } from 'react-hook-form';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -14,17 +14,17 @@ import {
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { TaskFormValues } from '@/types/tasks';
 
-// Use a generic type parameter to make this component more flexible
-interface TaskDueDateFieldProps<T extends { dueDate?: Date }> {
-  form: UseFormReturn<T>;
+interface TaskDueDateFieldProps {
+  form: UseFormReturn<TaskFormValues>;
 }
 
-export const TaskDueDateField = <T extends { dueDate?: Date }>({ form }: TaskDueDateFieldProps<T>) => {
+export const TaskDueDateField = ({ form }: TaskDueDateFieldProps) => {
   return (
     <FormField
       control={form.control}
-      name={"dueDate" as Path<T>}
+      name="dueDate"
       render={({ field }) => (
         <FormItem className="flex flex-col">
           <FormLabel>Due Date</FormLabel>
